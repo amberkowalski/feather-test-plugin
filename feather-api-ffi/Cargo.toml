@@ -1,13 +1,9 @@
 [package]
-name = "test-plugin"
+name = "feather-api-ffi"
 version = "0.1.0"
 authors = ["Amber Kowalski <amberkowalski03@gmail.com>"]
 edition = "2018"
 
-[lib]
-crate-type = ["cdylib"]
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-feather-ffi = { path = "feather-api-ffi", package = "feather-api-ffi" }
