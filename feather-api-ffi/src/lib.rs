@@ -1,3 +1,6 @@
+#[cfg(feature = "wasm")]
+use wasmer_runtime::types::ValueType;
+
 /// Stores a pointer and a length to a slice of u8
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -14,6 +17,9 @@ pub struct WASMString {
     pub len: u32,
 }
 
+#[cfg(feature = "wasm")]
+unsafe impl ValueType for WASMString {}
+
 /// C-Compatible representation of a system stage
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -23,6 +29,10 @@ pub enum SystemStage {
     SendPackets,
     CleanUp,
 }
+
+
+#[cfg(feature = "wasm")]
+unsafe impl ValueType for SystemStage {}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -40,6 +50,9 @@ pub struct WASMSystem {
     pub name: u32, // *const [u8]
 }
 
+#[cfg(feature = "wasm")]
+unsafe impl ValueType for WASMSystem {}
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HostSystems {
@@ -53,6 +66,9 @@ pub struct WASMSystems {
     pub len: u32,
     pub systems: u32, // *const [WASMSystem]
 }
+
+#[cfg(feature = "wasm")]
+unsafe impl ValueType for WASMSystems {}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -69,3 +85,6 @@ pub struct WASMPluginRegister {
     pub version: WASMString,
     pub systems: WASMString,
 }
+
+#[cfg(feature = "wasm")]
+unsafe impl ValueType for WASMPluginRegister {}
