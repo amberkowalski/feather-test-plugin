@@ -83,7 +83,7 @@ pub struct HostPluginRegister {
 pub struct WASMPluginRegister {
     pub name: WASMString,
     pub version: WASMString,
-    pub systems: WASMString,
+    pub systems: WASMSystems,
 }
 
 #[cfg(feature = "wasm")]
