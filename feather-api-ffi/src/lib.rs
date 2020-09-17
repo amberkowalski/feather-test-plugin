@@ -30,7 +30,6 @@ pub enum SystemStage {
     CleanUp,
 }
 
-
 #[cfg(feature = "wasm")]
 unsafe impl ValueType for SystemStage {}
 
