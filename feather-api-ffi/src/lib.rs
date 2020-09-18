@@ -1,5 +1,5 @@
 #[cfg(feature = "wasm")]
-use wasmer_runtime::types::ValueType;
+use wasmer::ValueType;
 
 /// Stores a pointer and a length to a slice of u8
 #[repr(C)]
