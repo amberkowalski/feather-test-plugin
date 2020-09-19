@@ -1,14 +1,6 @@
 #[cfg(feature = "wasm")]
 use wasmer::ValueType;
 
-/// Stores a pointer and a length to a slice of u8
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct HostString {
-    pub ptr: *const u8,
-    pub len: usize,
-}
-
 /// Allows for getting a slice of u8 out of wasm memory
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -72,8 +64,8 @@ unsafe impl ValueType for WASMSystems {}
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HostPluginRegister {
-    pub name: HostString,
-    pub version: HostString,
+    pub name: FFIString,
+    pub version: FFIString,
     pub systems: HostSystems,
 }
 
@@ -87,3 +79,32 @@ pub struct WASMPluginRegister {
 
 #[cfg(feature = "wasm")]
 unsafe impl ValueType for WASMPluginRegister {}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct FFIString {
+    pub ptr: *const str,
+    pub len: usize
+}
+
+impl From<String> for FFIString {
+    fn from(string: String) -> Self {
+        let as_str_boxed = string.into_boxed_str();
+        
+        Self {
+            len: as_str_boxed.len(),
+            ptr: Box::into_raw(as_str_boxed)
+        }
+    }
+}
+
+impl From<&str> for FFIString {
+    fn from(str: &str) -> Self {
+        let as_str_boxed: Box<str> = str.into();
+
+        Self {
+            len: as_str_boxed.len(),
+            ptr: Box::into_raw(as_str_boxed),
+        }
+    }
+}

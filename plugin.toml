@@ -1,0 +1,7 @@
+[plugin]
+name = "Amber's amazing testing plugin!"
+version = "0.1.0"
+
+[dependencies]
+feather = "0.6.0"
+economy_plugin = "0.1.0"

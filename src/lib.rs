@@ -1,7 +1,7 @@
-use feather_ffi::{HostPluginRegister, HostString, HostSystem, HostSystems, SystemStage};
+use feather_ffi::{HostPluginRegister, HostSystem, HostSystems, SystemStage};
 
 extern "C" {
-    fn print(ptr: *const u8, len: usize);
+    fn print(ptr: *const u8, len: u32);
 }
 
 #[no_mangle]
@@ -16,18 +16,12 @@ static PLUGIN_VERSION: &'static str = "1.0.0";
 pub extern "C" fn __quill_setup() -> *const HostPluginRegister {
     let hello = "Hello from a Plugin!";
     unsafe {
-        print(hello.as_ptr(), hello.len());
+        print(hello.as_ptr(), hello.len() as u32);
     }
 
     Box::into_raw(Box::new(HostPluginRegister {
-        name: HostString {
-            ptr: PLUGIN_NAME.as_ptr(),
-            len: PLUGIN_NAME.len(),
-        },
-        version: HostString {
-            ptr: PLUGIN_VERSION.as_ptr(),
-            len: PLUGIN_VERSION.len(),
-        },
+        name: PLUGIN_NAME.into(),
+        version: PLUGIN_VERSION.into(),
         systems: HostSystems {
             len: 1,
             systems: &[HostSystem {
@@ -43,5 +37,5 @@ pub extern "C" fn __quill_setup() -> *const HostPluginRegister {
 pub extern "C" fn test_system() {
     let to_print = "Plugin just ticked, awesome!";
 
-    unsafe { print(to_print.as_ptr(), to_print.len()) }
+    unsafe { print(to_print.as_ptr(), to_print.len() as u32) }
 }
