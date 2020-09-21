@@ -155,3 +155,10 @@ impl<T> Deref for Static<T> {
         &self.0
     }
 }
+
+#[cfg(feature = "wasm")]
+unsafe impl<T> ValueType for Static<T> where T: ValueType {}
+#[cfg(feature = "wasm")]
+unsafe impl<T> ValueType for SendHost<T> where T: ValueType {}
+#[cfg(feature = "wasm")]
+unsafe impl<T> ValueType for WasmOwned<T> where T: ValueType {}
