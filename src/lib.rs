@@ -1,4 +1,4 @@
-use feather_ffi::{HostPluginRegister, HostSystem, HostSystems, SendHost, SystemStage};
+use feather_ffi::{HostPluginRegister, HostSystem, HostSystems, SendHost, SystemStage, FFIString};
 
 extern "C" {
     fn print(ptr: *const u8, len: u32);
@@ -19,18 +19,22 @@ pub extern "C" fn __quill_setup() -> SendHost<*const HostPluginRegister> {
         print(hello.as_ptr(), hello.len() as u32);
     }
 
-    Box::into_raw(Box::new(HostPluginRegister {
+    let test_system_box = String::from("test_system").into_boxed_str();
+
+    SendHost(Box::into_raw(Box::new(HostPluginRegister {
         name: PLUGIN_NAME.into(),
         version: PLUGIN_VERSION.into(),
         systems: HostSystems {
             len: 1,
             systems: &[HostSystem {
                 stage: SystemStage::Tick,
-                len: "test_system".len() as u32,
-                name: "test_system".as_bytes(),
+                name: SendHost(FFIString {
+                    len: test_system_box.len(),
+                    ptr: Box::into_raw(test_system_box)
+                })
             }],
         },
-    }))
+    })))
 }
 
 #[no_mangle]

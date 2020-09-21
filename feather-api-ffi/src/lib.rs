@@ -31,16 +31,14 @@ unsafe impl ValueType for SystemStage {}
 #[derive(Copy, Clone, Debug)]
 pub struct HostSystem {
     pub stage: SystemStage,
-    pub len: u32,
-    pub name: *const [u8],
+    pub name: SendHost<FFIString>
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct WASMSystem {
     pub stage: SystemStage,
-    pub len: u32,
-    pub name: u32, // *const [u8]
+    pub name: SendHost<FFIString>
 }
 
 #[cfg(feature = "wasm")]
