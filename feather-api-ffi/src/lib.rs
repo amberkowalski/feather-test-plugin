@@ -113,25 +113,30 @@ impl From<&str> for FFIString {
 
 #[cfg(feature = "wasm")]
 /// Do not free. Not owned.
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct WasmOwned<T>(pub T);
 
 #[cfg(not(feature = "wasm"))]
 /// Can be freed. Owned.
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct WasmOwned<T>(pub T);
 
 #[cfg(feature = "wasm")]
 /// Must be freed. Allocated in WASM.
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct SendHost<T>(pub T);
 
 #[cfg(not(feature = "wasm"))]
 /// Sent to host. Not owned.
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct SendHost<T>(pub T);
 
 /// Static. Dont free and not owned.
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct Static<T>(pub T);
 
