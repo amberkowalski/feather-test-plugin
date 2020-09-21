@@ -113,13 +113,13 @@ impl From<&str> for FFIString {
 }
 
 #[cfg(feature = "wasm")]
-pub type WasmOwned<T> = ManuallyDrop<T>;
+pub type WasmOwned<T> = T;
 
 #[cfg(not(feature = "wasm"))]
 pub type WasmOwned<T> = T;
 
 #[cfg(feature = "wasm")]
-pub type SendHost<T> = ManuallyDrop<T>;
+pub type SendHost<T> = T;
 
 #[cfg(not(feature = "wasm"))]
 pub type SendHost<T> = T;
