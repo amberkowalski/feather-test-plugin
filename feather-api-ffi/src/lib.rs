@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 #[cfg(feature = "wasm")]
 use wasmer::ValueType;
@@ -126,6 +126,13 @@ impl<T> Deref for HostOwned<T> {
     }
 }
 
+impl<T> DerefMut for HostOwned<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+
 /// Indicates that the contained value is owned by a WASM module
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
@@ -136,6 +143,12 @@ impl<T> Deref for WasmOwned<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<T> DerefMut for WasmOwned<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -152,6 +165,12 @@ impl<T> Deref for SendWasm<T> {
     }
 }
 
+impl<T> DerefMut for SendWasm<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// Indicates a transfer of ownership from WASM to the Host
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
@@ -165,6 +184,12 @@ impl<T> Deref for SendHost<T> {
     }
 }
 
+impl<T> DerefMut for SendHost<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// Indicates the value is static and no special handling is required
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
@@ -175,5 +200,11 @@ impl<T> Deref for Static<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<T> DerefMut for Static<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
