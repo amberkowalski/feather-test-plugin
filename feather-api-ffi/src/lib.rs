@@ -108,3 +108,30 @@ impl From<&str> for FFIString {
         }
     }
 }
+
+/// Indicates that the contained value is owned by the Host
+/// 
+/// TODO: Might actually still require freeing
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct HostOwned<T>(pub T);
+
+/// Indicates that the contained value is owned by a WASM module
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct WasmOwned<T>(pub T);
+
+/// Indicates a transfer of ownership from the Host to WASM
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct SendWasm<T>(pub T);
+
+/// Indicates a transfer of ownership from WASM to the Host
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct SendHost<T>(pub T);
+
+/// Indicates the value is static and no special handling is required
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct Static<T>(pub T);
