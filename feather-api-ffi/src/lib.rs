@@ -1,5 +1,4 @@
-use std::mem::ManuallyDrop;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 #[cfg(feature = "wasm")]
 use wasmer::ValueType;
@@ -75,9 +74,9 @@ pub struct HostPluginRegister {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct WASMPluginRegister {
-    pub name: WASMString,
-    pub version: WASMString,
-    pub systems: WASMSystems,
+    pub name: Static<WASMString>,
+    pub version: Static<WASMString>,
+    pub systems: SendHost<WASMSystems>,
 }
 
 #[cfg(feature = "wasm")]
@@ -113,20 +112,46 @@ impl From<&str> for FFIString {
 }
 
 #[cfg(feature = "wasm")]
-/// Should not be freed.
-pub type WasmOwned<T> = T;
+/// Do not free. Not owned.
+#[derive(Copy, Clone, Debug)]
+pub struct WasmOwned<T>(pub T);
 
 #[cfg(not(feature = "wasm"))]
-/// Can be freed.
-pub type WasmOwned<T> = T;
+/// Can be freed. Owned.
+#[derive(Copy, Clone, Debug)]
+pub struct WasmOwned<T>(pub T);
 
 #[cfg(feature = "wasm")]
-/// Should be freed.
-pub type SendHost<T> = T;
+/// Must be freed. Allocated in WASM.
+#[derive(Copy, Clone, Debug)]
+pub struct SendHost<T>(pub T);
 
 #[cfg(not(feature = "wasm"))]
-/// Should not be freed.
-pub type SendHost<T> = T;
+/// Sent to host. Not owned.
+#[derive(Copy, Clone, Debug)]
+pub struct SendHost<T>(pub T);
 
-/// Should not be freed.
-pub type Static<T> = T;
+/// Static. Dont free and not owned.
+#[derive(Copy, Clone, Debug)]
+pub struct Static<T>(pub T);
+
+impl<T> Deref for WasmOwned<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> Deref for SendHost<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> Deref for Static<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
