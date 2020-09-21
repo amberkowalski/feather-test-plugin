@@ -21,7 +21,7 @@ pub extern "C" fn __quill_setup() -> SendHost<*const HostPluginRegister> {
         print(hello.as_ptr(), hello.len() as u32);
     }
 
-    let test_system_box = String::from("test_system").into_boxed_str();
+    let test_system_box: Box<[u8]> = Box::from(String::from("test_system").as_bytes());
 
     SendHost(Box::into_raw(Box::new(HostPluginRegister {
         name: PLUGIN_NAME.into(),

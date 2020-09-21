@@ -83,13 +83,13 @@ unsafe impl ValueType for WASMPluginRegister {}
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct FFIString {
-    pub ptr: *const str,
+    pub ptr: *const [u8],
     pub len: usize,
 }
 
 impl From<String> for SendHost<FFIString> {
     fn from(string: String) -> Self {
-        let as_str_boxed = string.into_boxed_str();
+        let as_str_boxed = string.into_bytes().into_boxed_slice();
 
         SendHost(FFIString {
             len: as_str_boxed.len(),
@@ -100,7 +100,7 @@ impl From<String> for SendHost<FFIString> {
 
 impl From<&str> for SendHost<FFIString> {
     fn from(str: &str) -> Self {
-        let as_str_boxed: Box<str> = str.into();
+        let as_str_boxed: Box<[u8]> = Box::from(str.as_bytes());
 
         SendHost(FFIString {
             len: as_str_boxed.len(),
