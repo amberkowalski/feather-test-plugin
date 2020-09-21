@@ -1,3 +1,4 @@
+use std::mem::ManuallyDrop;
 use std::ops::{Deref, DerefMut};
 
 #[cfg(feature = "wasm")]
@@ -86,16 +87,16 @@ unsafe impl ValueType for WASMPluginRegister {}
 #[derive(Copy, Clone, Debug)]
 pub struct FFIString {
     pub ptr: *const str,
-    pub len: usize
+    pub len: usize,
 }
 
 impl From<String> for FFIString {
     fn from(string: String) -> Self {
         let as_str_boxed = string.into_boxed_str();
-        
+
         Self {
             len: as_str_boxed.len(),
-            ptr: Box::into_raw(as_str_boxed)
+            ptr: Box::into_raw(as_str_boxed),
         }
     }
 }
@@ -111,100 +112,14 @@ impl From<&str> for FFIString {
     }
 }
 
-/// Indicates that the contained value is owned by the Host
-/// 
-/// TODO: Might actually still require freeing
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct HostOwned<T>(pub T);
+#[cfg(feature = "wasm")]
+pub type WasmOwned<T> = ManuallyDrop<T>;
 
-impl<T> Deref for HostOwned<T> {
-    type Target = T;
+#[cfg(not(feature = "wasm"))]
+pub type WasmOwned<T> = T;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+#[cfg(feature = "wasm")]
+pub type SendHost<T> = ManuallyDrop<T>;
 
-impl<T> DerefMut for HostOwned<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-
-/// Indicates that the contained value is owned by a WASM module
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct WasmOwned<T>(pub T);
-
-impl<T> Deref for WasmOwned<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for WasmOwned<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-/// Indicates a transfer of ownership from the Host to WASM
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct SendWasm<T>(pub T);
-
-impl<T> Deref for SendWasm<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for SendWasm<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-/// Indicates a transfer of ownership from WASM to the Host
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct SendHost<T>(pub T);
-
-impl<T> Deref for SendHost<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for SendHost<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-/// Indicates the value is static and no special handling is required
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct Static<T>(pub T);
-
-impl<T> Deref for Static<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Static<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+#[cfg(not(feature = "wasm"))]
+pub type SendHost<T> = T;

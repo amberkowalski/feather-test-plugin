@@ -19,7 +19,7 @@ pub extern "C" fn __quill_setup() -> SendHost<*const HostPluginRegister> {
         print(hello.as_ptr(), hello.len() as u32);
     }
 
-    SendHost(Box::into_raw(Box::new(HostPluginRegister {
+    Box::into_raw(Box::new(HostPluginRegister {
         name: PLUGIN_NAME.into(),
         version: PLUGIN_VERSION.into(),
         systems: HostSystems {
@@ -30,7 +30,7 @@ pub extern "C" fn __quill_setup() -> SendHost<*const HostPluginRegister> {
                 name: "test_system".as_bytes(),
             }],
         },
-    })))
+    }))
 }
 
 #[no_mangle]
