@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 [[package]]
 name = "feather-api-ffi"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "test-plugin"
