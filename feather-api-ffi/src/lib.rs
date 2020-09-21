@@ -64,8 +64,8 @@ unsafe impl ValueType for WASMSystems {}
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HostPluginRegister {
-    pub name: FFIString,
-    pub version: FFIString,
+    pub name: Static<FFIString>,
+    pub version: Static<FFIString>,
     pub systems: HostSystems,
 }
 
@@ -74,7 +74,7 @@ pub struct HostPluginRegister {
 pub struct WASMPluginRegister {
     pub name: Static<WASMString>,
     pub version: Static<WASMString>,
-    pub systems: SendHost<WASMSystems>,
+    pub systems: WASMSystems,
 }
 
 #[cfg(feature = "wasm")]
