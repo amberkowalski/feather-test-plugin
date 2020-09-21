@@ -1,6 +1,6 @@
 [package]
 name = "feather-api-ffi"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Amber Kowalski <amberkowalski03@gmail.com>"]
 edition = "2018"
 
