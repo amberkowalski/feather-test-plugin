@@ -1,9 +1,14 @@
-use feather_ffi::{
-    FFIString, HostPluginRegister, HostSystem, HostSystems, SendHost, Static, SystemStage,
-};
+use feather_ffi::{FFIPluginRegister, FFISlice, FFIString, FFISystem, Pass, Ref, SystemStage};
 
 extern "C" {
-    fn print(ptr: *const u8, len: u32);
+    fn unsafe_print(string: Ref<FFIString>);
+}
+
+pub fn print(text: &str) {
+    // Create an FFIString from the str and get a reference to it
+    let ffi_string = unsafe { FFIString::from_borrow(&text) };
+
+    unsafe { unsafe_print(Ref(ffi_string)) };
 }
 
 #[no_mangle]
@@ -15,33 +20,23 @@ static PLUGIN_NAME: &'static str = "Testing Plugin";
 static PLUGIN_VERSION: &'static str = "1.0.0";
 
 #[no_mangle]
-pub extern "C" fn __quill_setup() -> SendHost<*const HostPluginRegister> {
-    let hello = "Hello from a Plugin!";
-    unsafe {
-        print(hello.as_ptr(), hello.len() as u32);
-    }
+pub extern "C" fn __quill_setup() -> Pass<*const FFIPluginRegister> {
+    print("Yay!");
 
-    let test_system_box: Box<[u8]> = Box::from(String::from("test_system").as_bytes());
+    let test_system_name = "Poggers";
 
-    SendHost(Box::into_raw(Box::new(HostPluginRegister {
+    Pass(Box::into_raw(Box::new(FFIPluginRegister {
         name: PLUGIN_NAME.into(),
         version: PLUGIN_VERSION.into(),
-        systems: HostSystems {
-            len: 1,
-            systems: &[HostSystem {
-                stage: SystemStage::Tick,
-                name: SendHost(FFIString {
-                    len: test_system_box.len(),
-                    ptr: Box::into_raw(test_system_box),
-                }),
-            }],
-        },
+        systems: ((&[FFISystem {
+            stage: SystemStage::Tick,
+            name: test_system_name.into(),
+        }]) as &[FFISystem])
+            .into(),
     })))
 }
 
 #[no_mangle]
 pub extern "C" fn test_system() {
-    let to_print = "Plugin just ticked, awesome!";
-
-    unsafe { print(to_print.as_ptr(), to_print.len() as u32) }
+    print("Plugin just ticked!")
 }
