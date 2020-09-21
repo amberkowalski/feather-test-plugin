@@ -38,7 +38,7 @@ pub struct HostSystem {
 #[derive(Copy, Clone, Debug)]
 pub struct WASMSystem {
     pub stage: SystemStage,
-    pub name: SendHost<FFIString>
+    pub name: SendHost<WASMString>
 }
 
 #[cfg(feature = "wasm")]
