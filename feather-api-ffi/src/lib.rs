@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 #[cfg(feature = "wasm")]
 use wasmer::ValueType;
 
@@ -116,22 +118,62 @@ impl From<&str> for FFIString {
 #[derive(Copy, Clone, Debug)]
 pub struct HostOwned<T>(pub T);
 
+impl<T> Deref for HostOwned<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// Indicates that the contained value is owned by a WASM module
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct WasmOwned<T>(pub T);
+
+impl<T> Deref for WasmOwned<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /// Indicates a transfer of ownership from the Host to WASM
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct SendWasm<T>(pub T);
 
+impl<T> Deref for SendWasm<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// Indicates a transfer of ownership from WASM to the Host
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct SendHost<T>(pub T);
 
+impl<T> Deref for SendHost<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// Indicates the value is static and no special handling is required
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub struct Static<T>(pub T);
+
+impl<T> Deref for Static<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
