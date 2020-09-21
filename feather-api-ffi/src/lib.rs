@@ -113,15 +113,20 @@ impl From<&str> for FFIString {
 }
 
 #[cfg(feature = "wasm")]
+/// Should not be freed.
 pub type WasmOwned<T> = T;
 
 #[cfg(not(feature = "wasm"))]
+/// Can be freed.
 pub type WasmOwned<T> = T;
 
 #[cfg(feature = "wasm")]
+/// Should be freed.
 pub type SendHost<T> = T;
 
 #[cfg(not(feature = "wasm"))]
+/// Should not be freed.
 pub type SendHost<T> = T;
 
+/// Should not be freed.
 pub type Static<T> = T;
