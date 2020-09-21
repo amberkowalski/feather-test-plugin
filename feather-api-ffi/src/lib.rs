@@ -123,3 +123,5 @@ pub type SendHost<T> = ManuallyDrop<T>;
 
 #[cfg(not(feature = "wasm"))]
 pub type SendHost<T> = T;
+
+pub type Static<T> = T;
