@@ -64,16 +64,16 @@ unsafe impl ValueType for WASMSystems {}
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HostPluginRegister {
-    pub name: Static<FFIString>,
-    pub version: Static<FFIString>,
+    pub name: SendHost<FFIString>,
+    pub version: SendHost<FFIString>,
     pub systems: HostSystems,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct WASMPluginRegister {
-    pub name: Static<WASMString>,
-    pub version: Static<WASMString>,
+    pub name: SendHost<WASMString>,
+    pub version: SendHost<WASMString>,
     pub systems: WASMSystems,
 }
 
@@ -87,25 +87,25 @@ pub struct FFIString {
     pub len: usize,
 }
 
-impl From<String> for FFIString {
+impl From<String> for SendHost<FFIString> {
     fn from(string: String) -> Self {
         let as_str_boxed = string.into_boxed_str();
 
-        Self {
+        SendHost(FFIString {
             len: as_str_boxed.len(),
             ptr: Box::into_raw(as_str_boxed),
-        }
+        })
     }
 }
 
-impl From<&str> for FFIString {
+impl From<&str> for SendHost<FFIString> {
     fn from(str: &str) -> Self {
         let as_str_boxed: Box<str> = str.into();
 
-        Self {
+        SendHost(FFIString {
             len: as_str_boxed.len(),
             ptr: Box::into_raw(as_str_boxed),
-        }
+        })
     }
 }
 
