@@ -266,7 +266,7 @@ pub mod host {
             // Start by runnning WasmFree on the slice elements
             let slice_ptr: WasmPtr<T, Array> = WasmPtr::new(self.elements);
 
-            let slice = slice_ptr.deref(memory, 0, 0).unwrap();
+            let slice = slice_ptr.deref(memory, 0, self.len).unwrap();
 
             for element in slice.into_iter() {
                 println!("Freeing element");
