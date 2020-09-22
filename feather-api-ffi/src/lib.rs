@@ -7,7 +7,7 @@ use module::*;
 #[cfg(not(feature = "host"))]
 pub use module::*;
 
-mod module {
+pub mod module {
     use std::ops::Deref;
 
     #[repr(transparent)]
@@ -123,7 +123,7 @@ mod module {
 }
 
 #[cfg(feature = "host")]
-mod host {
+pub mod host {
     use std::marker::PhantomData;
     use wasmer::ValueType;
 
