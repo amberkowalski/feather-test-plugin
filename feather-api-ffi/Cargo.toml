@@ -6,7 +6,8 @@ edition = "2018"
 
 [features]
 default = []
-host = ["wasmer"]
+host = ["wasmer", "bytemuck"]
 
 [dependencies]
 wasmer = { version = "1.0.0-alpha3", optional = true }
+bytemuck = { version = "=1.4.1", features = ["derive"], optional = true } 

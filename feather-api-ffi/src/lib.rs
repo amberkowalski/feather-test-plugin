@@ -12,31 +12,20 @@ pub mod module {
 
     #[repr(transparent)]
     #[derive(Copy, Clone, Debug)]
-    pub struct Owned<T: Clone + Copy>(pub T);
+    pub struct PluginBox<T: Copy>(pub T);
 
     #[repr(transparent)]
     #[derive(Copy, Clone, Debug)]
-    pub struct Pass<T: Clone + Copy>(pub T);
+    pub struct PluginRef<T: Copy>(pub T);
 
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Debug)]
-    pub struct Ref<T: Clone + Copy>(pub T);
-
-    impl<T: Clone + Copy> Deref for Owned<T> {
+    impl<T: Clone + Copy> Deref for PluginBox<T> {
         type Target = T;
         fn deref(&self) -> &T {
             &self.0
         }
     }
 
-    impl<T: Clone + Copy> Deref for Pass<T> {
-        type Target = T;
-        fn deref(&self) -> &T {
-            &self.0
-        }
-    }
-
-    impl<T: Clone + Copy> Deref for Ref<T> {
+    impl<T: Clone + Copy> Deref for PluginRef<T> {
         type Target = T;
         fn deref(&self) -> &T {
             &self.0
@@ -46,12 +35,12 @@ pub mod module {
     /// A type that allows Strings to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFIString {
+    pub struct PluginString {
         ptr: *const u8,
         len: usize,
     }
 
-    impl FFIString {
+    impl PluginString {
         pub unsafe fn from_borrow(string: &str) -> Self {
             Self {
                 ptr: string.as_ptr(),
@@ -60,22 +49,22 @@ pub mod module {
         }
     }
 
-    impl From<String> for Pass<FFIString> {
+    impl From<String> for PluginBox<PluginString> {
         fn from(string: String) -> Self {
             let as_str_boxed = Box::new(string.as_str().as_bytes());
 
-            Pass(FFIString {
+            PluginBox(PluginString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
             })
         }
     }
 
-    impl From<&str> for Pass<FFIString> {
+    impl From<&str> for PluginBox<PluginString> {
         fn from(str: &str) -> Self {
             let as_str_boxed: Box<[u8]> = Box::from(str.as_bytes());
 
-            Pass(FFIString {
+            PluginBox(PluginString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
             })
@@ -85,19 +74,19 @@ pub mod module {
     /// A type that allows slices to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFISlice<T: Copy + Clone> {
+    pub struct PluginSlice<T: Copy + Clone> {
         len: usize,
         elements: *const [T],
     }
 
-    impl<T> From<&[T]> for Pass<FFISlice<T>>
+    impl<T> From<&[T]> for PluginBox<PluginSlice<T>>
     where
         T: Clone + Copy,
     {
-        fn from(from: &[T]) -> Pass<FFISlice<T>> {
+        fn from(from: &[T]) -> PluginBox<PluginSlice<T>> {
             let as_box: Box<[T]> = from.into();
 
-            Pass(FFISlice {
+            PluginBox(PluginSlice {
                 len: as_box.len(),
                 elements: Box::into_raw(as_box),
             })
@@ -107,23 +96,23 @@ pub mod module {
     /// A type that allows system definitions to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFISystem {
+    pub struct PluginSystem {
         pub stage: crate::SystemStage,
-        pub name: Pass<FFIString>,
+        pub name: PluginBox<PluginString>,
     }
 
     /// A type that defines a plugin's properties.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFIPluginRegister {
-        pub name: Pass<FFIString>,
-        pub version: Pass<FFIString>,
-        pub systems: Pass<FFISlice<FFISystem>>,
+    pub struct PluginRegister {
+        pub name: PluginBox<PluginString>,
+        pub version: PluginBox<PluginString>,
+        pub systems: PluginBox<PluginSlice<PluginSystem>>,
     }
 
-    impl Into<*const Pass<FFIPluginRegister>> for FFIPluginRegister {
-        fn into(self) -> *const Pass<FFIPluginRegister> {
-            let boxed_self = Box::from(Pass(self));
+    impl Into<*const PluginBox<PluginRegister>> for PluginRegister {
+        fn into(self) -> *const PluginBox<PluginRegister> {
+            let boxed_self = Box::from(PluginBox(self));
 
             Box::into_raw(boxed_self)
         }
@@ -136,57 +125,47 @@ pub mod host {
     use wasmer::ValueType;
     use wasmer::{WasmPtr, NativeFunc, Memory, Array};
     use std::alloc::{dealloc, Layout};
-
     use std::ops::Deref;
 
     #[repr(transparent)]
     #[derive(Copy, Clone, Debug)]
-    pub struct Owned<T: ValueType>(pub T);
+    pub struct PluginBox<T: ValueType>(pub T);
 
     #[repr(transparent)]
     #[derive(Copy, Clone, Debug)]
-    pub struct Pass<T: ValueType>(pub T);
+    pub struct PluginRef<T: ValueType>(pub T);
 
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Debug)]
-    pub struct Ref<T: ValueType>(pub T);
-
-    impl<T: ValueType> Deref for Owned<T> {
+    impl<T: ValueType> Deref for PluginBox<T> {
         type Target = T;
         fn deref(&self) -> &T {
             &self.0
         }
     }
 
-    impl<T: ValueType> Deref for Pass<T> {
+    unsafe impl<T> ValueType for PluginBox<T> where T: ValueType {}
+
+    impl<T: ValueType> Deref for PluginRef<T> {
         type Target = T;
         fn deref(&self) -> &T {
             &self.0
         }
     }
 
-    impl<T: ValueType> Deref for Ref<T> {
-        type Target = T;
-        fn deref(&self) -> &T {
-            &self.0
-        }
-    }
+    unsafe impl<T> ValueType for PluginRef<T> where T: ValueType {}
 
     pub trait WasmFree: ValueType {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>);
     }
 
-    unsafe impl ValueType for crate::SystemStage {}
-
     /// A type that allows Strings to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFIString {
+    pub struct PluginString {
         pub ptr: u32,
         pub len: u32,
     }
 
-    impl FFIString {
+    impl PluginString {
         pub fn to_string(&self, memory: &Memory) -> Option<String> {
             let ptr: WasmPtr<u8, Array> = WasmPtr::new(self.ptr);
 
@@ -194,10 +173,12 @@ pub mod host {
         }
     }
 
-    impl WasmFree for Owned<FFIString> {
+    unsafe impl ValueType for PluginString {}
+
+    impl WasmFree for PluginBox<PluginString> {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             let type_size = std::mem::size_of::<u8>() as u32;
-            let type_align = std::mem::align_of::<FFIString>() as u32;
+            let type_align = std::mem::align_of::<PluginString>() as u32;
 
             // Adjust the layout to free the entire slice
             let free_size = type_size * self.len;
@@ -207,20 +188,20 @@ pub mod host {
         }
     }
 
-    unsafe impl ValueType for FFIString {}
-
     /// A type that allows slices to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFISlice<T: ValueType> {
+    pub struct PluginSlice<T: ValueType> {
         pub len: u32,
         pub elements: u32, // *const [T]
         _marker: PhantomData<T>,
     }
 
+    unsafe impl<T> ValueType for PluginSlice<T> where T: ValueType {}
+
     // Known Bug: things that are `WasmFree` wont get freed inside the FFISS
 
-    impl<T> WasmFree for Owned<FFISlice<T>> where T: ValueType {
+    impl<T> WasmFree for PluginBox<PluginSlice<T>> where T: ValueType {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             let type_size = std::mem::size_of::<T>() as u32;
             let type_align = std::mem::align_of::<T>() as u32;
@@ -232,34 +213,34 @@ pub mod host {
         }
     }
 
-    unsafe impl<T> ValueType for FFISlice<T> where T: ValueType {}
-
     /// A type that allows system definitions to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFISystem {
+    pub struct PluginSystem {
         pub stage: crate::SystemStage,
-        pub name: Owned<FFIString>,
+        pub name: PluginBox<PluginString>,
     }
 
-    impl WasmFree for Owned<FFISystem> {
+    unsafe impl ValueType for PluginSystem {}
+
+    impl WasmFree for PluginBox<PluginSystem> {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             self.name.free(free_func)
         }
     }
 
-    unsafe impl ValueType for FFISystem {}
-
     /// A type that defines a plugin's properties.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
-    pub struct FFIPluginRegister {
-        pub name: Owned<FFIString>,
-        pub version: Owned<FFIString>,
-        pub systems: Owned<FFISlice<FFISystem>>,
+    pub struct PluginRegister {
+        pub name: PluginBox<PluginString>,
+        pub version: PluginBox<PluginString>,
+        pub systems: PluginBox<PluginSlice<PluginString>>,
     }
 
-    impl WasmFree for Owned<FFIPluginRegister> {
+    unsafe impl ValueType for PluginRegister {}
+
+    impl WasmFree for PluginBox<PluginRegister> {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             self.name.free(free_func);
             self.version.free(free_func);
@@ -267,20 +248,14 @@ pub mod host {
         }
     }
 
-    impl Owned<FFIPluginRegister> {
-        pub fn free_ptr_to(ptr: WasmPtr<Owned<FFIPluginRegister>>, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
+    impl PluginBox<PluginRegister> {
+        pub fn free_ptr_to(ptr: WasmPtr<u8>, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             let type_size = std::mem::size_of::<Self>() as u32;
             let type_align = std::mem::align_of::<Self>() as u32;
 
             free_func.call(WasmPtr::new(ptr.offset()), type_size, type_align).unwrap()
         }
     }
-
-    unsafe impl ValueType for FFIPluginRegister {}
-
-    unsafe impl<T> ValueType for Owned<T> where T: ValueType {}
-    unsafe impl<T> ValueType for Pass<T> where T: ValueType {}
-    unsafe impl<T> ValueType for Ref<T> where T: ValueType {}
 }
 
 /// C-Compatible representation of a system stage
