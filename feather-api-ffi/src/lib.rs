@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 #[cfg(feature = "host")]
 pub use host::*;
 
@@ -10,6 +8,41 @@ use module::*;
 pub use module::*;
 
 mod module {
+    use std::ops::Deref;
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Owned<T: Clone + Copy>(pub T);
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Pass<T: Clone + Copy>(pub T);
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Ref<T: Clone + Copy>(pub T);
+
+    impl<T: Clone + Copy> Deref for Owned<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    impl<T: Clone + Copy> Deref for Pass<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    impl<T: Clone + Copy> Deref for Ref<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
     /// A type that allows Strings to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
@@ -22,7 +55,7 @@ mod module {
         pub unsafe fn from_borrow(string: &str) -> Self {
             Self {
                 ptr: string.as_ptr(),
-                len: string.len()
+                len: string.len(),
             }
         }
     }
@@ -30,18 +63,18 @@ mod module {
     impl From<String> for crate::Pass<FFIString> {
         fn from(string: String) -> Self {
             let as_str_boxed = Box::new(string.as_str().as_bytes());
-    
+
             crate::Pass(FFIString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
             })
         }
     }
-    
+
     impl From<&str> for crate::Pass<FFIString> {
         fn from(str: &str) -> Self {
             let as_str_boxed: Box<[u8]> = Box::from(str.as_bytes());
-    
+
             crate::Pass(FFIString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
@@ -54,19 +87,20 @@ mod module {
     #[derive(Copy, Clone, Debug)]
     pub struct FFISlice<T: Copy + Clone> {
         len: usize,
-        elements: *const [T]
+        elements: *const [T],
     }
 
-    impl<T> From<&[T]> for crate::Pass<FFISlice<T>> where T: Clone + Copy {
+    impl<T> From<&[T]> for crate::Pass<FFISlice<T>>
+    where
+        T: Clone + Copy,
+    {
         fn from(from: &[T]) -> crate::Pass<FFISlice<T>> {
             let as_box: Box<[T]> = from.into();
 
-            crate::Pass (
-                FFISlice {
-                    len: as_box.len(),
-                    elements: Box::into_raw(as_box)
-                }
-            )
+            crate::Pass(FFISlice {
+                len: as_box.len(),
+                elements: Box::into_raw(as_box),
+            })
         }
     }
 
@@ -90,8 +124,43 @@ mod module {
 
 #[cfg(feature = "host")]
 mod host {
-    use wasmer::ValueType;
     use std::marker::PhantomData;
+    use wasmer::ValueType;
+
+    use std::ops::Deref;
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Owned<T: ValueType>(pub T);
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Pass<T: ValueType>(pub T);
+
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct Ref<T: ValueType>(pub T);
+
+    impl<T: ValueType> Deref for Owned<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    impl<T: ValueType> Deref for Pass<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    impl<T: ValueType> Deref for Ref<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
 
     pub trait WasmFree {
         fn free(self, memory: (), free_func: ());
@@ -122,10 +191,13 @@ mod host {
     pub struct FFISlice<T: ValueType> {
         len: u32,
         elements: u32, // *const [T]
-        _marker: PhantomData<T>
+        _marker: PhantomData<T>,
     }
 
-    impl<T> WasmFree for crate::Owned<FFISlice<T>> where T: ValueType {
+    impl<T> WasmFree for crate::Owned<FFISlice<T>>
+    where
+        T: ValueType,
+    {
         fn free(self, memory: (), free_func: ()) {
             // Logic
             todo!();
@@ -178,18 +250,6 @@ mod host {
     unsafe impl<T> ValueType for crate::Ref<T> where T: ValueType {}
 }
 
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct Owned<T>(pub T);
-
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct Pass<T>(pub T);
-
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub struct Ref<T>(pub T);
-
 /// C-Compatible representation of a system stage
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -198,26 +258,4 @@ pub enum SystemStage {
     Tick,
     SendPackets,
     CleanUp,
-}
-
-
-impl<T> Deref for Owned<T> {
-    type Target = T;
-    fn deref(&self) -> &T {
-        &self.0
-    }
-}
-
-impl<T> Deref for Pass<T> {
-    type Target = T;
-    fn deref(&self) -> &T {
-        &self.0
-    }
-}
-
-impl<T> Deref for Ref<T> {
-    type Target = T;
-    fn deref(&self) -> &T {
-        &self.0
-    }
 }
