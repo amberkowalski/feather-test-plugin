@@ -60,22 +60,22 @@ mod module {
         }
     }
 
-    impl From<String> for crate::Pass<FFIString> {
+    impl From<String> for Pass<FFIString> {
         fn from(string: String) -> Self {
             let as_str_boxed = Box::new(string.as_str().as_bytes());
 
-            crate::Pass(FFIString {
+            Pass(FFIString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
             })
         }
     }
 
-    impl From<&str> for crate::Pass<FFIString> {
+    impl From<&str> for Pass<FFIString> {
         fn from(str: &str) -> Self {
             let as_str_boxed: Box<[u8]> = Box::from(str.as_bytes());
 
-            crate::Pass(FFIString {
+            Pass(FFIString {
                 len: as_str_boxed.len(),
                 ptr: Box::into_raw(as_str_boxed) as *const u8,
             })
@@ -90,14 +90,14 @@ mod module {
         elements: *const [T],
     }
 
-    impl<T> From<&[T]> for crate::Pass<FFISlice<T>>
+    impl<T> From<&[T]> for Pass<FFISlice<T>>
     where
         T: Clone + Copy,
     {
-        fn from(from: &[T]) -> crate::Pass<FFISlice<T>> {
+        fn from(from: &[T]) -> Pass<FFISlice<T>> {
             let as_box: Box<[T]> = from.into();
 
-            crate::Pass(FFISlice {
+            Pass(FFISlice {
                 len: as_box.len(),
                 elements: Box::into_raw(as_box),
             })
@@ -109,16 +109,16 @@ mod module {
     #[derive(Copy, Clone, Debug)]
     pub struct FFISystem {
         pub stage: crate::SystemStage,
-        pub name: crate::Pass<FFIString>,
+        pub name: Pass<FFIString>,
     }
 
     /// A type that defines a plugin's properties.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
     pub struct FFIPluginRegister {
-        pub name: crate::Pass<FFIString>,
-        pub version: crate::Pass<FFIString>,
-        pub systems: crate::Pass<FFISlice<FFISystem>>,
+        pub name: Pass<FFIString>,
+        pub version: Pass<FFIString>,
+        pub systems: Pass<FFISlice<FFISystem>>,
     }
 }
 
@@ -176,7 +176,7 @@ mod host {
         len: u32,
     }
 
-    impl WasmFree for crate::Owned<FFIString> {
+    impl WasmFree for Owned<FFIString> {
         fn free(self, memory: (), free_func: ()) {
             // Logic
             todo!();
@@ -194,7 +194,7 @@ mod host {
         _marker: PhantomData<T>,
     }
 
-    impl<T> WasmFree for crate::Owned<FFISlice<T>>
+    impl<T> WasmFree for Owned<FFISlice<T>>
     where
         T: ValueType,
     {
@@ -211,10 +211,10 @@ mod host {
     #[derive(Copy, Clone, Debug)]
     pub struct FFISystem {
         pub stage: crate::SystemStage,
-        pub name: crate::Owned<FFIString>,
+        pub name: Owned<FFIString>,
     }
 
-    impl WasmFree for crate::Owned<FFISystem> {
+    impl WasmFree for Owned<FFISystem> {
         fn free(self, memory: (), free_func: ()) {
             // Logic
             todo!();
@@ -227,9 +227,9 @@ mod host {
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
     pub struct FFIPluginRegister {
-        pub name: crate::Owned<FFIString>,
-        pub version: crate::Owned<FFIString>,
-        pub systems: crate::Owned<FFISlice<FFISystem>>,
+        pub name: Owned<FFIString>,
+        pub version: Owned<FFIString>,
+        pub systems: Owned<FFISlice<FFISystem>>,
     }
 
     impl WasmFree for FFIPluginRegister {
@@ -245,9 +245,9 @@ mod host {
 
     unsafe impl ValueType for FFIPluginRegister {}
 
-    unsafe impl<T> ValueType for crate::Owned<T> where T: ValueType {}
-    unsafe impl<T> ValueType for crate::Pass<T> where T: ValueType {}
-    unsafe impl<T> ValueType for crate::Ref<T> where T: ValueType {}
+    unsafe impl<T> ValueType for Owned<T> where T: ValueType {}
+    unsafe impl<T> ValueType for Pass<T> where T: ValueType {}
+    unsafe impl<T> ValueType for Ref<T> where T: ValueType {}
 }
 
 /// C-Compatible representation of a system stage
