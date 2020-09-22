@@ -93,6 +93,28 @@ pub mod module {
         }
     }
 
+        /// A type that allows slices to be sent over FFI.
+        #[repr(C)]
+        #[derive(Copy, Clone, Debug)]
+        pub struct PluginSliceAlloc<T: Copy + Clone> {
+            len: usize,
+            elements: *const [T],
+        }
+    
+        impl<T> From<&[T]> for PluginBox<PluginSliceAlloc<T>>
+        where
+            T: Clone + Copy,
+        {
+            fn from(from: &[T]) -> PluginBox<PluginSliceAlloc<T>> {
+                let as_box: Box<[T]> = from.into();
+    
+                PluginBox(PluginSliceAlloc {
+                    len: as_box.len(),
+                    elements: Box::into_raw(as_box),
+                })
+            }
+        }
+
     /// A type that allows system definitions to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
@@ -107,7 +129,7 @@ pub mod module {
     pub struct PluginRegister {
         pub name: PluginBox<PluginString>,
         pub version: PluginBox<PluginString>,
-        pub systems: PluginBox<PluginSlice<PluginSystem>>,
+        pub systems: PluginBox<PluginSliceAlloc<PluginSystem>>,
     }
 
     impl Into<*const PluginBox<PluginRegister>> for PluginRegister {
@@ -213,6 +235,38 @@ pub mod host {
         }
     }
 
+    /// A type that allows slices to be sent over FFI.
+    #[repr(C)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct PluginSliceAlloc<T: ValueType + WasmFree> {
+        pub len: u32,
+        pub elements: u32, // *const [T]
+        _marker: PhantomData<T>,
+    }
+
+    unsafe impl<T> ValueType for PluginSliceAlloc<T> where T: ValueType + WasmFree {}
+
+    // Known Bug: things that are `WasmFree` wont get freed inside the FFISS
+
+    impl<T> WasmFree for PluginBox<PluginSliceAlloc<T>> where T: ValueType + WasmFree {
+        fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
+            // Start by runnning WasmFree on the slice elements
+            let slice = unsafe { std::slice::from_raw_parts(self.elements as *const T, self.len as usize) };
+
+            for element in slice {
+                element.free(&free_func);
+            }
+
+            let type_size = std::mem::size_of::<T>() as u32;
+            let type_align = std::mem::align_of::<T>() as u32;
+
+            // Adjust the layout to free the entire slice
+            let free_size = type_size * self.len;
+
+            free_func.call(WasmPtr::new(self.elements), free_size as u32, type_align as u32).unwrap();
+        }
+    }
+
     /// A type that allows system definitions to be sent over FFI.
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
@@ -223,7 +277,7 @@ pub mod host {
 
     unsafe impl ValueType for PluginSystem {}
 
-    impl WasmFree for PluginBox<PluginSystem> {
+    impl WasmFree for PluginSystem {
         fn free(self, free_func: &NativeFunc<(WasmPtr<u8>, u32, u32)>) {
             self.name.free(free_func)
         }
@@ -235,7 +289,7 @@ pub mod host {
     pub struct PluginRegister {
         pub name: PluginBox<PluginString>,
         pub version: PluginBox<PluginString>,
-        pub systems: PluginBox<PluginSlice<PluginSystem>>,
+        pub systems: PluginBox<PluginSliceAlloc<PluginSystem>>,
     }
 
     unsafe impl ValueType for PluginRegister {}
