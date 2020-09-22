@@ -1,4 +1,6 @@
-use feather_ffi::{FFIPluginRegister, Owned, FFISlice, FFIString, FFISystem, Pass, Ref, SystemStage};
+use feather_ffi::{
+    FFIPluginRegister, FFISlice, FFIString, FFISystem, Owned, Pass, Ref, SystemStage,
+};
 
 extern "C" {
     fn unsafe_print(string: *const Ref<FFIString>);
@@ -17,27 +19,23 @@ extern "C" fn __quill_free(ptr: *const u8, size: usize, align: usize) {
 
     let layout = Layout::from_size_align(size, align).unwrap();
 
+    print(format!("{:?}", layout).as_str());
+
     unsafe { dealloc(ptr as *mut u8, layout) };
 }
 
-static PLUGIN_NAME: &'static str = "Testing Plugin";
-static PLUGIN_VERSION: &'static str = "1.0.0";
-
 #[no_mangle]
-pub extern "C" fn __quill_setup() -> *const Owned<FFIPluginRegister> {
-    print("Yay!");
-
-    let test_system_name = "Poggers";
-
-    Box::into_raw(Box::new(Owned(FFIPluginRegister {
-        name: PLUGIN_NAME.into(),
-        version: PLUGIN_VERSION.into(),
-        systems: ((&[FFISystem {
+pub extern "C" fn __quill_setup() -> *const Pass<FFIPluginRegister> {
+    FFIPluginRegister {
+        name: "Testing Plugin".into(),
+        version: "1.0.0".into(),
+        systems: (&[FFISystem {
             stage: SystemStage::Tick,
-            name: test_system_name.into(),
-        }]) as &[FFISystem])
+            name: "test_system".into(),
+        }] as &[_])
             .into(),
-    })))
+    }
+    .into()
 }
 
 #[no_mangle]

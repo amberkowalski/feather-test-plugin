@@ -120,6 +120,14 @@ pub mod module {
         pub version: Pass<FFIString>,
         pub systems: Pass<FFISlice<FFISystem>>,
     }
+
+    impl Into<*const Pass<FFIPluginRegister>> for FFIPluginRegister {
+        fn into(self) -> *const Pass<FFIPluginRegister> {
+            let boxed_self = Box::from(Pass(self));
+
+            Box::into_raw(boxed_self)
+        }
+    }
 }
 
 #[cfg(feature = "host")]
