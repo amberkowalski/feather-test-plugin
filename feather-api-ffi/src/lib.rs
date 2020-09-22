@@ -126,7 +126,7 @@ pub mod module {
 pub mod host {
     use std::marker::PhantomData;
     use wasmer::ValueType;
-    use wasmer::{WasmPtr, NativeFunc, Memory};
+    use wasmer::{WasmPtr, NativeFunc, Memory, Array};
     use std::alloc::{dealloc, Layout};
 
     use std::ops::Deref;
@@ -176,6 +176,14 @@ pub mod host {
     pub struct FFIString {
         pub ptr: u32,
         pub len: u32,
+    }
+
+    impl FFIString {
+        pub fn to_string(&self, memory: &Memory) -> Option<String> {
+            let ptr: WasmPtr<u8, Array> = WasmPtr::new(self.ptr);
+
+            Some(ptr.get_utf8_string(memory, self.len)?.to_owned())
+        }
     }
 
     impl WasmFree for Owned<FFIString> {
