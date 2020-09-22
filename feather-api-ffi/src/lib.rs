@@ -269,7 +269,6 @@ pub mod host {
             let slice = slice_ptr.deref(memory, 0, self.len).unwrap();
 
             for element in slice.into_iter() {
-                println!("Freeing element");
                 element.get().free(memory, free_func);
             }
 
