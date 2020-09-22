@@ -1,19 +1,23 @@
 use feather_ffi::{FFIPluginRegister, FFISlice, FFIString, FFISystem, Pass, Ref, SystemStage};
 
 extern "C" {
-    fn unsafe_print(string: Ref<FFIString>);
+    fn unsafe_print(string: *const Ref<FFIString>);
 }
 
 pub fn print(text: &str) {
     // Create an FFIString from the str and get a reference to it
     let ffi_string = unsafe { FFIString::from_borrow(&text) };
 
-    unsafe { unsafe_print(Ref(ffi_string)) };
+    unsafe { unsafe_print(&Ref(ffi_string)) };
 }
 
 #[no_mangle]
-extern "C" fn __quill_free(ptr: *mut u8) {
-    unsafe { drop(Box::from_raw(ptr)) };
+extern "C" fn __quill_free(ptr: *mut u8, size: usize, align: usize) {
+    use std::alloc::{dealloc, Layout};
+
+    let layout = Layout::from_size_align(size, align).unwrap();
+
+    unsafe { dealloc(ptr, layout) };
 }
 
 static PLUGIN_NAME: &'static str = "Testing Plugin";
