@@ -1,17 +1,9 @@
-use feather_ffi::{
-    PluginRegister, PluginSlice, PluginString, PluginSystem, PluginBox, PluginRef, SystemStage,
+use quill_internals::raw::{
+    LogLevel, PluginBox, PluginRegister, PluginSystem,
+    SystemStage,
 };
 
-extern "C" {
-    fn unsafe_print(string: *const PluginRef<PluginString>);
-}
-
-pub fn print(text: &str) {
-    // Create an FFIString from the str and get a reference to it
-    let ffi_string = unsafe { PluginString::from_borrow(&text) };
-
-    unsafe { unsafe_print(&PluginRef(ffi_string)) };
-}
+use quill_internals::module_externs::log;
 
 #[no_mangle]
 extern "C" fn __quill_free(ptr: *const u8, size: usize, align: usize) {
@@ -19,7 +11,7 @@ extern "C" fn __quill_free(ptr: *const u8, size: usize, align: usize) {
 
     let layout = Layout::from_size_align(size, align).unwrap();
 
-    print(format!("{:?}", layout).as_str());
+    log(LogLevel::Info, &format!("{:?}", layout).as_str());
 
     unsafe { dealloc(ptr as *mut u8, layout) };
 }
@@ -40,5 +32,5 @@ pub extern "C" fn __quill_setup() -> *const PluginBox<PluginRegister> {
 
 #[no_mangle]
 pub extern "C" fn test_system() {
-    print("Plugin just ticked!")
+    log(LogLevel::Debug, &"Plugin just ticked!")
 }
