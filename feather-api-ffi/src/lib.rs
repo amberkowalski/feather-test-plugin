@@ -235,7 +235,7 @@ pub mod host {
     pub struct PluginRegister {
         pub name: PluginBox<PluginString>,
         pub version: PluginBox<PluginString>,
-        pub systems: PluginBox<PluginSlice<PluginString>>,
+        pub systems: PluginBox<PluginSlice<PluginSystem>>,
     }
 
     unsafe impl ValueType for PluginRegister {}
