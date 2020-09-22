@@ -172,8 +172,8 @@ pub mod host {
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
     pub struct FFIString {
-        ptr: u32,
-        len: u32,
+        pub ptr: u32,
+        pub len: u32,
     }
 
     impl WasmFree for Owned<FFIString> {
@@ -189,8 +189,8 @@ pub mod host {
     #[repr(C)]
     #[derive(Copy, Clone, Debug)]
     pub struct FFISlice<T: ValueType> {
-        len: u32,
-        elements: u32, // *const [T]
+        pub len: u32,
+        pub elements: u32, // *const [T]
         _marker: PhantomData<T>,
     }
 
