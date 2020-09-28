@@ -10,4 +10,5 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-quill-internals = { git = "https://github.com/amberkowalski/quill-internals.git"}
+quill-sys = { git = "https://github.com/feather-rs/quill.git", branch = "develop"}
+wasm-tracing-allocator = { git = "https://github.com/amberkowalski/feather-tracing-allocator.git" }

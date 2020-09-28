@@ -1,18 +1,20 @@
-use quill_internals::raw::{
-    LogLevel, PluginBox, PluginRegister, PluginSystem,
-    SystemStage,
-};
+use quill_sys::raw::{LogLevel, PluginBox, PluginRegister, PluginSystem, SystemStage};
 
-use quill_internals::module_externs::log;
+use std::alloc::System;
+
+use wasm_tracing_allocator::WasmTracingAllocator;
+
+#[global_allocator]
+static GLOBAL_ALLOCATOR: WasmTracingAllocator<System> = WasmTracingAllocator(System);
+
+use quill_sys::module_externs::log;
 
 #[no_mangle]
 extern "C" fn __quill_free(ptr: *const u8, size: usize, align: usize) {
     use std::alloc::{dealloc, Layout};
 
     let layout = Layout::from_size_align(size, align).unwrap();
-
-    log(LogLevel::Info, &format!("{:?}", layout).as_str());
-
+    
     unsafe { dealloc(ptr as *mut u8, layout) };
 }
 
